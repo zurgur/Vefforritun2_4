@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+require('isomorphic-fetch');
 /* todo require og stilla dót */
 
 /**
@@ -37,6 +37,11 @@ const departments = [
  */
 async function getTests(slug) {
   /* todo */
+  const index = departments.map(i => i.slug).indexOf(slug) + 1;
+  const slod = `https://ugla.hi.is/Proftafla/View/ajax.php?sid=2027&a=getProfSvids&proftaflaID=37&svidID=${index}&notaVinnuToflu=0`;
+  const gogn = await fetch(slod);
+  const texti = await gogn.text();
+  console.info(texti);
 }
 
 /**
