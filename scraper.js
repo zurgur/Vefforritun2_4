@@ -1,5 +1,7 @@
 require('dotenv').config();
 require('isomorphic-fetch');
+const cheerio = require('cheerio');
+
 /* todo require og stilla dót */
 
 /**
@@ -38,10 +40,32 @@ const departments = [
 async function getTests(slug) {
   /* todo */
   const index = departments.map(i => i.slug).indexOf(slug) + 1;
+  if (index === 0) return null;
   const slod = `https://ugla.hi.is/Proftafla/View/ajax.php?sid=2027&a=getProfSvids&proftaflaID=37&svidID=${index}&notaVinnuToflu=0`;
   const gogn = await fetch(slod);
-  const texti = await gogn.text();
-  console.info(texti);
+  const texti = await gogn.json();
+  const { html } = texti;
+  const $ = cheerio.load(html);
+  const h3 = $('h3');
+  const tests = [];
+  h3.each((i, el) => {
+    tests.push({ heding: $(el).text().trim(), tests: [] });
+    const tbody = $(el).next('table').find('tbody');
+    tbody.each((c, em) => {
+      const tr = $(em).find('tr');
+      const arr = [];
+      tr.each((l, elm) => {
+        const td = $(elm).find('td');
+        td.each((e, element) => {
+          arr.push($(element).text());
+        });
+      });
+      tests[i].tests.push({
+        course: arr[0], name: arr[1], type: arr[2], students: arr[3], date: arr[4],
+      });
+    });
+  });
+  return tests;
 }
 
 /**
