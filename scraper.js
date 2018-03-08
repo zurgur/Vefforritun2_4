@@ -1,6 +1,18 @@
 require('dotenv').config();
 require('isomorphic-fetch');
 const cheerio = require('cheerio');
+const redis = require('redis');
+const util = require('util');
+
+
+const redisOptions = {
+  url: 'redis://127.0.0.1:6379/0',
+};
+
+const client = redis.createClient(redisOptions);
+
+const asyncGet = util.promisify(client.get).bind(client);
+const asyncSet = util.promisify(client.mset).bind(client);
 
 /* todo require og stilla dót */
 
@@ -41,6 +53,11 @@ async function getTests(slug) {
   /* todo */
   const index = departments.map(i => i.slug).indexOf(slug) + 1;
   if (index === 0) return null;
+  const key = `tests${index}`;
+  const cached = await asyncGet(key);
+  if (cached) {
+    return cached;
+  }
   const slod = `https://ugla.hi.is/Proftafla/View/ajax.php?sid=2027&a=getProfSvids&proftaflaID=37&svidID=${index}&notaVinnuToflu=0`;
   const gogn = await fetch(slod);
   const texti = await gogn.json();
@@ -65,6 +82,7 @@ async function getTests(slug) {
       });
     });
   });
+  await asyncSet(key, tests);
   return tests;
 }
 
