@@ -13,6 +13,7 @@ const client = redis.createClient(redisOptions);
 
 const asyncGet = util.promisify(client.get).bind(client);
 const asyncSet = util.promisify(client.mset).bind(client);
+const asyncFlush = util.promisify(client.flushall).bind(client);
 
 /* todo require og stilla dót */
 
@@ -56,7 +57,7 @@ async function getTests(slug) {
   const key = `tests${index}`;
   const cached = await asyncGet(key);
   if (cached) {
-    return cached;
+    return JSON.parse(cached);
   }
   const slod = `https://ugla.hi.is/Proftafla/View/ajax.php?sid=2027&a=getProfSvids&proftaflaID=37&svidID=${index}&notaVinnuToflu=0`;
   const gogn = await fetch(slod);
@@ -82,7 +83,7 @@ async function getTests(slug) {
       });
     });
   });
-  await asyncSet(key, tests);
+  await asyncSet(key, JSON.stringify(tests));
   return tests;
 }
 
@@ -93,6 +94,7 @@ async function getTests(slug) {
  */
 async function clearCache() {
   /* todo */
+  return asyncFlush();
 }
 
 /**
