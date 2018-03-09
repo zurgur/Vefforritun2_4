@@ -43,23 +43,13 @@ const departments = [
     slug: 'verkfraedi-og-natturuvisindasvid',
   },
 ];
-
-/**
- * Sækir svið eftir `slug`. Fáum gögn annaðhvort beint frá vef eða úr cache.
- *
- * @param {string} slug - Slug fyrir svið sem skal sækja
- * @returns {Promise} Promise sem mun innihalda gögn fyrir svið eða null ef það finnst ekki
- */
-async function getTests(slug) {
-  /* todo */
-  const index = departments.map(i => i.slug).indexOf(slug) + 1;
-  if (index === 0) return null;
+async function getJson(index) {
+  const slod = `https://ugla.hi.is/Proftafla/View/ajax.php?sid=2027&a=getProfSvids&proftaflaID=37&svidID=${index}&notaVinnuToflu=0`;
   const key = `tests${index}`;
   const cached = await asyncGet(key);
   if (cached) {
     return JSON.parse(cached);
   }
-  const slod = `https://ugla.hi.is/Proftafla/View/ajax.php?sid=2027&a=getProfSvids&proftaflaID=37&svidID=${index}&notaVinnuToflu=0`;
   const gogn = await fetch(slod);
   const texti = await gogn.json();
   const { html } = texti;
@@ -86,6 +76,19 @@ async function getTests(slug) {
   await asyncSet(key, JSON.stringify(tests));
   return tests;
 }
+/**
+ * Sækir svið eftir `slug`. Fáum gögn annaðhvort beint frá vef eða úr cache.
+ *
+ * @param {string} slug - Slug fyrir svið sem skal sækja
+ * @returns {Promise} Promise sem mun innihalda gögn fyrir svið eða null ef það finnst ekki
+ */
+async function getTests(slug) {
+  /* todo */
+  const index = departments.map(i => i.slug).indexOf(slug) + 1;
+  if (index === 0) return null;
+  const tests = getJson(index);
+  return tests;
+}
 
 /**
  * Hreinsar cache.
@@ -93,7 +96,6 @@ async function getTests(slug) {
  * @returns {Promise} Promise sem mun innihalda boolean um hvort cache hafi verið hreinsað eða ekki.
  */
 async function clearCache() {
-  /* todo */
   return asyncFlush();
 }
 
@@ -103,7 +105,26 @@ async function clearCache() {
  * @returns {Promise} Promise sem mun innihalda object með tölfræði um próf
  */
 async function getStats() {
-  /* todo */
+  const tests = await getJson(0);
+  let ma = 0;
+  let mi = Infinity;
+  let num = 0;
+  for (let i = 0; i < tests.length; i += 1) {
+    let { students } = tests[i].tests[0];
+    students = parseInt(students, 10);
+    num += students;
+    if (students < mi) {
+      mi = students;
+    }
+    if (students > ma) {
+      ma = students;
+    }
+  }
+  const avg = num / tests.length;
+  const stats = {
+    min: mi, max: ma, numTests: num, averageStudents: avg,
+  };
+  return stats;
 }
 
 module.exports = {
