@@ -61,18 +61,20 @@ async function getJson(index) {
     const tbody = $(el).next('table').find('tbody');
     tbody.each((c, em) => {
       const tr = $(em).find('tr');
-      const arr = [];
+      let arr = [];
       tr.each((l, elm) => {
         const td = $(elm).find('td');
+        arr = [];
         td.each((e, element) => {
           arr.push($(element).text());
         });
-      });
-      tests[i].tests.push({
-        course: arr[0], name: arr[1], type: arr[2], students: arr[3], date: arr[4],
+        tests[i].tests.push({
+          course: arr[0], name: arr[1], type: arr[2], students: arr[3], date: arr[4],
+        });
       });
     });
   });
+  console.info(JSON.stringify(tests[0]));
   await asyncSet(key, JSON.stringify(tests), 'EX', process.env.REDIS_EXPIRE);
   return tests;
 }
@@ -110,14 +112,17 @@ async function getStats() {
   let mi = Infinity;
   let num = 0;
   for (let i = 0; i < tests.length; i += 1) {
-    let { students } = tests[i].tests[0];
-    students = parseInt(students, 10);
-    num += students;
-    if (students < mi) {
-      mi = students;
-    }
-    if (students > ma) {
-      ma = students;
+    console.info(tests[i].heding);
+    for (let j = 0; j < tests[i].tests.length; j += 1) {
+      let { students } = tests[i].tests[j];
+      students = parseInt(students, 10);
+      num += students;
+      if (students < mi) {
+        mi = students;
+      }
+      if (students > ma) {
+        ma = students;
+      }
     }
   }
   const avg = num / tests.length;
