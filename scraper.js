@@ -12,7 +12,7 @@ const redisOptions = {
 const client = redis.createClient(redisOptions);
 
 const asyncGet = util.promisify(client.get).bind(client);
-const asyncSet = util.promisify(client.mset).bind(client);
+const asyncSet = util.promisify(client.set).bind(client);
 const asyncFlush = util.promisify(client.flushall).bind(client);
 
 /* todo require og stilla dót */
@@ -74,7 +74,6 @@ async function getJson(index) {
       });
     });
   });
-  console.info(JSON.stringify(tests[0]));
   await asyncSet(key, JSON.stringify(tests), 'EX', process.env.REDIS_EXPIRE);
   return tests;
 }
@@ -111,12 +110,13 @@ async function getStats() {
   let ma = 0;
   let mi = Infinity;
   let num = 0;
+  let numT = 0;
   for (let i = 0; i < tests.length; i += 1) {
-    console.info(tests[i].heding);
     for (let j = 0; j < tests[i].tests.length; j += 1) {
       let { students } = tests[i].tests[j];
       students = parseInt(students, 10);
       num += students;
+      numT += 1;
       if (students < mi) {
         mi = students;
       }
@@ -127,7 +127,7 @@ async function getStats() {
   }
   const avg = num / tests.length;
   const stats = {
-    min: mi, max: ma, numTests: num, averageStudents: avg,
+    min: mi, max: ma, numTests: numT, numStudents: num, averageStudents: avg,
   };
   return stats;
 }
